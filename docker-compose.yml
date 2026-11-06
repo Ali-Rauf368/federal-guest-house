@@ -1,0 +1,40 @@
+services:
+  app:
+    build:
+      context: .
+      args:
+        VITE_ORG_NAME: ${VITE_ORG_NAME:-Federal Guest House}
+        VITE_ORG_ADDRESS: ${VITE_ORG_ADDRESS:-}
+        VITE_ORG_PHONE: ${VITE_ORG_PHONE:-}
+        VITE_ORG_TAX_NUMBER: ${VITE_ORG_TAX_NUMBER:-}
+    restart: unless-stopped
+    ports: ["127.0.0.1:4500:4500"]
+    environment:
+      DATABASE_URL: postgresql://fgh:${POSTGRES_PASSWORD}@postgres:5432/federal_guest_house
+      MONGO_URL: mongodb://mongo:27017/federal_guest_house
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGIN: ${PUBLIC_URL}
+      TRUST_PROXY: ${TRUST_PROXY:-1}
+    depends_on:
+      postgres: { condition: service_healthy }
+      mongo: { condition: service_started }
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: fgh
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: federal_guest_house
+    volumes: ["postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U fgh -d federal_guest_house"]
+      interval: 5s
+      retries: 10
+  mongo:
+    image: mongo:8
+    restart: unless-stopped
+    volumes: ["mongo:/data/db"]
+
+volumes:
+  postgres:
+  mongo:

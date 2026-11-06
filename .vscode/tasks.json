@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start Federal Guest House",
+      "detail": "Postgres, MongoDB, then API (:4500) and web (:5490)",
+      "type": "shell",
+      "command": "npm run dev",
+      "group": { "kind": "build", "isDefault": true },
+      "isBackground": true,
+      "problemMatcher": [],
+      "presentation": { "panel": "dedicated", "reveal": "always" }
+    },
+    { "label": "Reset demo data", "type": "shell", "command": "npm run dev:services && npm run db:migrate && npm run db:seed", "problemMatcher": [] },
+    { "label": "Stop services", "type": "shell", "command": "npm run stop:services", "problemMatcher": [] }
+  ]
+}

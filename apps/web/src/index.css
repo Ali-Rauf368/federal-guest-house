@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-soft: var(--soft);
+  --color-edge: var(--edge);
+  --color-fg: var(--fg);
+  --color-fg-2: var(--fg-2);
+  --color-fg-3: var(--fg-3);
+  --color-brand: var(--brand);
+  --color-brand-fg: var(--brand-fg);
+  --color-brand-soft: var(--brand-soft);
+  --color-side: var(--side);
+  --color-side-fg: var(--side-fg);
+  --color-brass: var(--brass);
+}
+
+@theme {
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Source Serif 4", ui-serif, Georgia, serif;
+}
+
+:root {
+  --bg: #f6f4ee;
+  --card: #ffffff;
+  --soft: #edeae0;
+  --edge: #e0dccf;
+  --fg: #1b2622;
+  --fg-2: #47544e;
+  --fg-3: #6a756f;
+  --brand: #0f5c4a;
+  --brand-fg: #ffffff;
+  --brand-soft: #dcebe5;
+  --side: #0c2f28;
+  --side-fg: #bcd2ca;
+  --brass: #e9c46a;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #0e1513;
+  --card: #161f1c;
+  --soft: #1e2a26;
+  --edge: #2b3934;
+  --fg: #e9efec;
+  --fg-2: #b5c2bc;
+  --fg-3: #8b9993;
+  --brand: #5cc4a6;
+  --brand-fg: #0e1513;
+  --brand-soft: #1b3a32;
+  --side: #0a1412;
+  --side-fg: #a6bdb4;
+  --brass: #e9c46a;
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-bg font-sans text-fg antialiased;
+}
+
+h1,
+h2 {
+  font-family: var(--font-serif);
+}
+
+td,
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
+@media print {
+  @page {
+    size: A4;
+    margin: 18mm;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}

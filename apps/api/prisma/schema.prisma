@@ -1,0 +1,157 @@
+// Reservations, rooms and billing of the Federal Guest House. The access log lives in MongoDB (src/db/mongo.ts).
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  RECEPTION
+  HOUSEKEEPING
+}
+
+enum GuestCategory {
+  OFFICIAL
+  STATE_GUEST
+  PRIVATE
+}
+
+enum RoomCondition {
+  READY
+  DIRTY
+  CLEANING
+  OUT_OF_ORDER
+}
+
+enum ReservationStatus {
+  REQUESTED
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  REJECTED
+  NO_SHOW
+}
+
+enum ChargeKind {
+  MEAL
+  LAUNDRY
+  TRANSPORT
+  OTHER
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  /// Billed to the guest's department instead of being paid at the desk.
+  DEPARTMENT
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+}
+
+model RoomType {
+  id                String @id @default(uuid())
+  name              String @unique
+  capacity          Int
+  /// Nightly tariffs in minor currency units. State guests stay free of charge.
+  officialRateCents Int
+  privateRateCents  Int
+  rooms             Room[]
+}
+
+model Room {
+  id           String        @id @default(uuid())
+  number       String        @unique
+  floor        Int
+  typeId       String
+  type         RoomType      @relation(fields: [typeId], references: [id])
+  condition    RoomCondition @default(READY)
+  note         String?
+  reservations Reservation[]
+}
+
+model Guest {
+  id           String        @id @default(uuid())
+  fullName     String
+  category     GuestCategory
+  /// National ID or passport number.
+  idNumber     String?       @unique
+  designation  String?
+  department   String?
+  phone        String
+  email        String?
+  createdAt    DateTime      @default(now())
+  reservations Reservation[]
+
+  @@index([fullName])
+}
+
+/// Overlapping active stays in a room are refused by the database itself:
+/// see the reservation_no_overlap exclusion constraint in the init migration.
+model Reservation {
+  id               String            @id @default(uuid())
+  /// Shown to staff as "FGH-000123".
+  number           Int               @unique @default(autoincrement())
+  guestId          String
+  guest            Guest             @relation(fields: [guestId], references: [id])
+  roomId           String
+  room             Room              @relation(fields: [roomId], references: [id])
+  checkIn          DateTime          @db.Date
+  /// Departure day. The room is free again from this day on.
+  checkOut         DateTime          @db.Date
+  adults           Int               @default(1)
+  purpose          String
+  status           ReservationStatus @default(REQUESTED)
+  /// Tariff at booking time, so later tariff changes don't alter existing stays.
+  nightlyRateCents Int
+  decisionNote     String?
+  createdBy        String
+  decidedBy        String?
+  checkedInAt      DateTime?
+  checkedOutAt     DateTime?
+  createdAt        DateTime          @default(now())
+  charges          Charge[]
+  payments         Payment[]
+
+  @@index([status, checkIn])
+  @@index([guestId])
+}
+
+model Charge {
+  id             String      @id @default(uuid())
+  reservationId  String
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  kind           ChargeKind
+  description    String
+  quantity       Int         @default(1)
+  unitPriceCents Int
+  createdAt      DateTime    @default(now())
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  reservationId String
+  reservation   Reservation   @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  method        PaymentMethod
+  amountCents   Int
+  reference     String?
+  createdAt     DateTime      @default(now())
+  /// Payments are never deleted. A mistaken one is reversed, and stays visible on the bill.
+  reversedAt    DateTime?
+  reversedBy    String?
+  reversalNote  String?
+}
